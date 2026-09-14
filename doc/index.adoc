@@ -1,0 +1,102 @@
+////
+  Copyright 2026 Quintauris GmbH
+  Licensed under the Apache License, Version 2.0 (the "License").
+  https://www.apache.org/licenses/LICENSE-2.0
+////
+
+include::common.adoc[]
+
+= The LLVM Layer
+Quintauris <www.quintauris.com> (generated {localdatetime})
+
+== Overview
+
+This layer provides toolchain configuration for https://llvm.org[LLVM] https://clang.llvm.org[Clang] in the context of the {project}, specifically:
+
+* {cmake} toolchain configuration files for the RVI20U32 RISC-V ISA profile
+* Standard section definitions file for the LLD Linker
+* {docker} container definition
+
+== Requirements
+
+* `clang`, `lld` and LLVM binary tools (`ar`, `ranlib`, `objcopy`) available in one of the following locations:
+** `/usr/bin`
+** `/usr/local/bin`
+** `/opt/llvm/bin`
+** `/opt/homebrew/opt/llvm/bin`
+** `/opt/homebrew/opt/lld/bin`
+
+or:
+
+* {docker} 28 or higher
+
+== Usage
+
+`rave`, the {project} build and execution orchestrator, supports automatic toolchain management, so that the files above described don't have to be explicitly referenced during the build process.
+
+=== Building locally
+
+Toolchains and targets supported by a particular {project} distribution can be listed as follows (don't forget to bootstrap your {project} distribution first sourcing `bootstrap.sh`):
+
+```
+$ rave list --toolchains
+llvm.clang
+gnu.gcc
+$ rave list --machines
+qemu.virt_rvi20u32
+```
+
+In the following example, machine `qemu.virt_rvi20u32` is configured and built using the `llvm.clang` toolchain, targeting the RVI20U32 ISA profile:
+
+```
+$ rave make --machine qemu.virt_rvi20u32 --toolchain llvm.clang --toolchain-target rvi20u32 --configure --build
+...
+[*] Command completed successfully
+```
+
+Build results can be found under `build/local/llvm_clang/qemu_virt_rvi20u32`.
+
+Machines can supply a default/recommended toolchain target in their `machine.json` file, so the user initiating a build doesn't have to decide upon and configure a suitable compiler target for the machine in question:
+
+```
+$ rave make --machine qemu.virt_rvi20u32 --toolchain llvm.clang --toolchain-target default --configure --build
+...
+[*] Command completed successfully
+```
+
+=== Building on a Docker container
+
+`rave` also supports deployment of toolchain containers and execution of builds within them, so different toolchains can be leveraged with the minimum overhead and system pollution possible. Before using the `llvm.clang` toolchain container, it has to be first provisioned (i.e. have its image built):
+
+```
+$ rave docker --toolchain llvm.clang --provision
+...
+[*] Command completed successfully
+```
+
+Then spinned up:
+
+```
+$ rave docker --toolchain llvm.clang --up
+...
+[*] Command completed successfully
+```
+
+Now that our container is ready:
+
+```
+CONTAINER ID   IMAGE                COMMAND       CREATED          STATUS          PORTS     NAMES
+...
+036c0e133336   rvbl:llvm.clang         "/bin/bash"   42 seconds ago   Up 42 seconds             rvbl.llvm_clang
+...
+```
+
+We can command builds using `rave` normally, only adding the `--docker` flag so commands are executed within the container we've just provisioned and spinned up:
+
+```
+$ rave make --machine qemu.virt_rvi20u32 --toolchain llvm.clang --toolchain-target default --configure --build --docker
+...
+[*] Command completed successfully
+```
+
+Build results can be found under `build/docker/llvm_clang/qemu_virt_rvi20u32`.
