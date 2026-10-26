@@ -10,6 +10,7 @@ RUN apt-get install -y cmake=3.28.3-1build7
 RUN apt-get install -y clang=1:18.0-59~exp2
 RUN apt-get install -y lld=1:18.0-59~exp2
 RUN apt-get install -y asciidoctor=2.0.20-1
+RUN apt-get install -y plantuml
 RUN apt-get install -y libglib2.0-dev
 RUN apt-get install -y git
 RUN apt-get install -y rustup
